@@ -43,12 +43,28 @@ export function Investigation({ initial }: { initial: SessionView }) {
   const [notes, setNotes] = useState(initial.notes);
   const [notesSaved, setNotesSaved] = useState(false);
   const [noteBusy, setNoteBusy] = useState(false);
+  const pageRef = useRef<HTMLElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLTextAreaElement>(null);
   const lock = useRef(false);
   const modalRef = useRef<HTMLDialogElement>(null);
   const router = useRouter();
   const active = game.status === "active";
+  useEffect(() => {
+    const viewport = window.visualViewport;
+    if (!viewport) return;
+    // Some mobile keyboards resize only the visual viewport, leaving 100dvh unchanged.
+    const resize = () => {
+      if (viewport.scale === 1)
+        pageRef.current?.style.setProperty(
+          "--play-height",
+          `${viewport.height}px`,
+        );
+    };
+    resize();
+    viewport.addEventListener("resize", resize);
+    return () => viewport.removeEventListener("resize", resize);
+  }, []);
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }, [game.messages.length, busy]);
@@ -97,7 +113,8 @@ export function Investigation({ initial }: { initial: SessionView }) {
     } finally {
       lock.current = false;
       setBusy(false);
-      textRef.current?.focus();
+      if (window.matchMedia("(hover: hover) and (pointer: fine)").matches)
+        textRef.current?.focus({ preventScroll: true });
     }
   }
   function act(type: Action["type"], text?: string) {
@@ -147,7 +164,7 @@ export function Investigation({ initial }: { initial: SessionView }) {
     }
   }
   return (
-    <main className="play-page">
+    <main className="play-page" ref={pageRef}>
       <nav className="play-nav">
         <Brand small />
         <Link href="/" className="back-link">
@@ -162,6 +179,7 @@ export function Investigation({ initial }: { initial: SessionView }) {
           <button
             key={t}
             className={tab === t ? "selected" : ""}
+            aria-pressed={tab === t}
             onClick={() => setTab(t)}
           >
             {t === "case"
@@ -190,6 +208,13 @@ export function Investigation({ initial }: { initial: SessionView }) {
             <FileText size={14} /> THE KNOWN STORY
           </div>
           <p className="surface-text">{game.case.surface}</p>
+          <button
+            className="case-continue"
+            onClick={() => setTab("conversation")}
+          >
+            {active ? "Ask the keeper" : "Read the explanation"}
+            <ArrowUp size={18} className="rotate-arrow" />
+          </button>
           <div className="case-reminder">
             <Flame size={22} />
             <p>

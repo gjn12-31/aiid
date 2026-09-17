@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "@fontsource/dm-sans/400.css";
 import "@fontsource/dm-sans/500.css";
 import "@fontsource/dm-sans/600.css";
@@ -13,6 +13,13 @@ export const metadata: Metadata = {
   description:
     "Strange situations. Small questions. Unexpected truths. An interactive collection of lateral-thinking mysteries.",
   robots: { index: false, follow: false },
+};
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  interactiveWidget: "resizes-content",
+  themeColor: "#24291f",
 };
 export default function RootLayout({
   children,
