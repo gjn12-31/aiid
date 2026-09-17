@@ -7,7 +7,7 @@ import {
   ArrowUp,
   Check,
   ChevronDown,
-  Fingerprint,
+  Flame,
   Lightbulb,
   LoaderCircle,
   LockKeyhole,
@@ -36,7 +36,9 @@ export function Investigation({ initial }: { initial: SessionView }) {
   const [modal, setModal] = useState<"theory" | "hint" | "giveup" | null>(null);
   const [theory, setTheory] = useState("");
   const [tab, setTab] = useState<"conversation" | "case" | "notebook">(
-    "conversation",
+    initial.status === "active" && initial.messages.length === 1
+      ? "case"
+      : "conversation",
   );
   const [notes, setNotes] = useState(initial.notes);
   const [notesSaved, setNotesSaved] = useState(false);
@@ -149,7 +151,7 @@ export function Investigation({ initial }: { initial: SessionView }) {
       <nav className="play-nav">
         <Brand small />
         <Link href="/" className="back-link">
-          <ArrowLeft size={15} /> The collection
+          <ArrowLeft size={15} /> Back to the tavern
         </Link>
         <span className="saved-label">
           <span /> PROGRESS SAVED
@@ -175,7 +177,11 @@ export function Investigation({ initial }: { initial: SessionView }) {
           className={`case-panel ${tab === "case" ? "mobile-active" : ""}`}
         >
           <div className="case-panel-top">
-            <span className="eyebrow">CASE FILE {game.case.number}</span>
+            <span className="eyebrow">
+              {game.case.generated
+                ? "FRESHLY INKED"
+                : `TALE ${game.case.number}`}
+            </span>
             <span className="mini-tag">{game.case.difficulty}</span>
           </div>
           <h1>{game.case.title}</h1>
@@ -185,7 +191,7 @@ export function Investigation({ initial }: { initial: SessionView }) {
           </div>
           <p className="surface-text">{game.case.surface}</p>
           <div className="case-reminder">
-            <Fingerprint size={22} />
+            <Flame size={22} />
             <p>
               Question the obvious.
               <br />
@@ -223,7 +229,7 @@ export function Investigation({ initial }: { initial: SessionView }) {
         >
           <header className="conversation-heading">
             <div className="host-avatar">
-              <Fingerprint size={24} />
+              <Flame size={24} />
             </div>
             <div>
               <h2>The keeper of the story</h2>

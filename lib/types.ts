@@ -1,4 +1,5 @@
-export type CaseId = "monopoly" | "candles" | "pilot";
+export type BuiltInCaseId = "monopoly" | "candles" | "pilot";
+export type CaseId = BuiltInCaseId | `tale-${string}`;
 export type Verdict = "YES" | "NO" | "IRRELEVANT" | "CLARIFY" | "UNKNOWN";
 export type CaseSummary = {
   id: CaseId;
@@ -10,6 +11,9 @@ export type CaseSummary = {
   minutes: string;
   surface: string;
   opening: string;
+  generated?: boolean;
+  mood?: string;
+  language?: "en" | "zh";
 };
 export type Message = {
   id: string;
@@ -46,4 +50,5 @@ export type SessionSummary = {
   status: GameSession["status"];
   updatedAt: string;
   questions: number;
+  case?: CaseSummary;
 };

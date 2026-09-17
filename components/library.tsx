@@ -1,9 +1,8 @@
 "use client";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowRight,
-  ArrowUpRight,
   Clock3,
   Sparkles,
   LoaderCircle,
@@ -11,11 +10,22 @@ import {
   Eye,
   MessageCircle,
   NotebookPen,
+  Dices,
+  WandSparkles,
+  ScrollText,
 } from "lucide-react";
 import { Brand, Footer } from "./brand";
 import { CaseArt } from "./case-art";
+import { TavernScene } from "./tavern-scene";
 import { catalog } from "@/lib/catalog";
 import type { SessionSummary } from "@/lib/types";
+type BrewRequest = { requestId: string; style: string; language: "en" | "zh" };
+const moods = [
+  { label: "Spooky", value: "恐怖 / spooky, a chilling mystery", icon: "☾" },
+  { label: "Eerie", value: "阴森 / eerie and unsettling", icon: "✧" },
+  { label: "Cheerful", value: "开心 / cheerful and heartwarming", icon: "☀" },
+  { label: "Absurd", value: "荒诞 / absurd and funny", icon: "⁂" },
+];
 export function Library({
   sessions,
   available,
@@ -26,128 +36,306 @@ export function Library({
   const router = useRouter();
   const [starting, setStarting] = useState("");
   const [error, setError] = useState("");
+  const [style, setStyle] = useState("");
+  const [language, setLanguage] = useState<"en" | "zh">("en");
   const [filter, setFilter] = useState("all");
+  const lock = useRef(false);
+  const retry = useRef<BrewRequest | null>(null);
+  const generated = sessions.filter(
+    (s, i, all) =>
+      s.case?.generated &&
+      all.findIndex((other) => other.caseId === s.caseId) === i,
+  );
+  function changeStyle(value: string) {
+    setStyle(value);
+    retry.current = null;
+    setError("");
+  }
+  async function brew() {
+    if (lock.current) return;
+    lock.current = true;
+    setStarting("brew");
+    setError("");
+    const input = retry.current ?? {
+      requestId: crypto.randomUUID(),
+      style: style.trim(),
+      language,
+    };
+    retry.current = input;
+    try {
+      // Establish the guest before a paid request so a lost response can be retried safely.
+      const guest = await fetch("/api/guest", {
+        method: "POST",
+        signal: AbortSignal.timeout(10_000),
+      });
+      if (!guest.ok)
+        throw new Error("Could not open the tavern. Please try again.");
+      const response = await fetch("/api/stories", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(input),
+        signal: AbortSignal.timeout(115_000),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error);
+      router.push(`/play/${data.id}`);
+    } catch (e) {
+      setError(
+        e instanceof Error && !["TimeoutError", "AbortError"].includes(e.name)
+          ? e.message
+          : "The storyteller needs a little longer. Retry to recover this same tale.",
+      );
+      lock.current = false;
+      setStarting("");
+    }
+  }
   async function start(id: string) {
-    if (starting) return;
+    if (lock.current) return;
+    lock.current = true;
     setStarting(id);
     setError("");
     try {
-      const res = await fetch("/api/sessions", {
+      const response = await fetch("/api/sessions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ caseId: id }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error);
       router.push(`/play/${data.id}`);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Could not open the case.");
+      setError(e instanceof Error ? e.message : "Could not open this tale.");
+      lock.current = false;
       setStarting("");
     }
   }
   return (
-    <main className="library-page">
-      <nav className="main-nav">
+    <main className="tavern-page">
+      <nav className="tavern-nav">
         <Brand />
-        <div className="nav-links">
-          <a href="#collection">The collection</a>
-          <a href="#how-it-works">
-            How to play <ArrowUpRight size={14} />
-          </a>
+        <div className="tavern-links">
+          <a href="#collection">The story shelf</a>
+          <a href="#how-it-works">How to play</a>
         </div>
-        <span className="edition">
-          VOL. 01 <span> / </span> THE UNEXPECTED
-        </span>
+        <span className="tavern-edition">A PENNY FOR YOUR THEORY</span>
       </nav>
-      <section className="hero">
-        <div className="hero-copy">
+      <section className="tavern-hero">
+        <div className="tavern-intro">
           <span className="eyebrow">
-            <span className="tiny-star">✳</span> SMALL QUESTIONS. UNEXPECTED
-            TRUTHS.
+            <span>✦</span> COME IN. THE CANDLES ARE LIT.
           </span>
           <h1>
-            There is always
+            Something strange
             <br />
-            another side
-            <br />
-            to <em>the story.</em>
+            is <em>brewing.</em>
           </h1>
           <p>
-            A strange scene. A hidden explanation.
+            A peculiar tale. A well-kept secret.
             <br />
-            Ask the right questions and discover what
-            <br className="desktop-br" /> everyone else overlooked.
+            Bring your questions. Leave your assumptions.
           </p>
-          <a className="button light" href="#collection">
-            Open an investigation <ArrowUpRight size={18} />
-          </a>
-          <span className="hero-note">
-            No account needed. Just a curious mind.
+          <div className="hero-flourish">
+            <span />✧<span />
+          </div>
+          <span className="handwritten">
+            One more question might change everything.
           </span>
         </div>
-        <div className="hero-exhibit">
-          <div className="exhibit-top">
-            <span>FROM THE ARCHIVES</span>
-            <span>001 — 003</span>
+        <TavernScene />
+      </section>
+      <section
+        className={`brew-panel ${starting === "brew" ? "is-brewing" : ""}`}
+        aria-labelledby="brew-heading"
+        id="brew"
+      >
+        <div className="brew-heading">
+          <span className="wax-seal">
+            <WandSparkles size={25} />
+          </span>
+          <div>
+            <h2 id="brew-heading">What shall we brew?</h2>
+            <p>Give your story a mood, or let fate decide.</p>
           </div>
-          <div className="hero-file">
-            <div className="file-tab">CASE No. 002</div>
-            <CaseArt id="candles" hero />
-            <div className="exhibit-caption">
-              <span>
-                ONE LESS CANDLE.
-                <br />
-                ONE MORE QUESTION.
-              </span>
-              <p>
-                Why would an empty
-                <br />
-                birthday cake bring joy?
-              </p>
+          <span className="brew-mark">
+            A FRESH TALE
+            <br />
+            EVERY TIME
+          </span>
+        </div>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            void brew();
+          }}
+        >
+          <div className="brew-fields">
+            <label className="sr-only" htmlFor="story-style">
+              Story style (optional)
+            </label>
+            <textarea
+              id="story-style"
+              value={style}
+              maxLength={240}
+              rows={2}
+              disabled={!!starting}
+              onChange={(e) => changeStyle(e.target.value)}
+              placeholder="A haunted castle? A cheerful village? Leave blank for a surprise..."
+            />
+            <div className="mood-row">
+              <span className="mood-label">A pinch of...</span>
+              {moods.map((m) => (
+                <button
+                  type="button"
+                  key={m.label}
+                  className={`mood-chip ${style === m.value ? "chosen" : ""}`}
+                  aria-pressed={style === m.value}
+                  disabled={!!starting}
+                  onClick={() => changeStyle(style === m.value ? "" : m.value)}
+                >
+                  <span aria-hidden="true">{m.icon}</span>
+                  {m.label}
+                </button>
+              ))}
+              <button
+                type="button"
+                className="random-mood"
+                disabled={!!starting}
+                onClick={() => changeStyle("")}
+                aria-label="Clear style for a random story"
+              >
+                <Dices size={17} /> Surprise me
+              </button>
             </div>
           </div>
-          <span className="archive-stamp">
-            NOTHING IS
-            <br />
-            QUITE AS IT SEEMS
-          </span>
-        </div>
-      </section>
-      <section className="collection" id="collection">
-        <div className="section-heading">
-          <div>
-            <span className="eyebrow">YOUR NEXT MYSTERY</span>
-            <h2>
-              The case files<span> / 03</span>
-            </h2>
+          <div className="brew-submit">
+            <label htmlFor="story-language">
+              Story language{" "}
+              <select
+                id="story-language"
+                value={language}
+                disabled={!!starting}
+                onChange={(e) => {
+                  setLanguage(e.target.value as "en" | "zh");
+                  retry.current = null;
+                }}
+              >
+                <option value="en">English</option>
+                <option value="zh">中文</option>
+              </select>
+            </label>
+            <button
+              className="brew-button"
+              disabled={!!starting || !available}
+              type="submit"
+            >
+              {starting === "brew" ? (
+                <LoaderCircle className="spin" size={20} />
+              ) : (
+                <WandSparkles size={21} />
+              )}
+              <span>
+                {starting === "brew"
+                  ? "Brewing your tale..."
+                  : error && retry.current
+                    ? "Retry this brew"
+                    : "Brew a mystery"}
+              </span>
+            </button>
+            <p>Leave it blank. Take a chance.</p>
           </div>
-          <div className="filter-tabs" aria-label="Filter cases">
+        </form>
+        {starting === "brew" && (
+          <div className="brew-status" role="status">
+            <span className="ink-dots">● ● ●</span> The storyteller is weaving a
+            new mystery. A good twist takes a moment.
+          </div>
+        )}
+        {!available && (
+          <p className="brew-error" role="status">
+            The storyteller is away. Your saved tales are still here.
+          </p>
+        )}
+        {error && (
+          <p className="brew-error" role="alert">
+            {error}
+          </p>
+        )}
+        <div className="paper-corner" aria-hidden="true" />
+      </section>
+      {generated.length > 0 && (
+        <section
+          className="tale-shelf generated-shelf"
+          aria-labelledby="your-tales"
+        >
+          <div className="shelf-heading">
+            <div>
+              <span className="eyebrow">INKED JUST FOR YOU</span>
+              <h2 id="your-tales">
+                Your conjured tales <span>({generated.length})</span>
+              </h2>
+            </div>
+            <ScrollText size={28} />
+          </div>
+          <div className="generated-grid">
+            {generated.map((s) => (
+              <article className="conjured-card" key={s.caseId}>
+                <div className="conjured-icon">
+                  <ScrollText size={31} strokeWidth={1.3} />
+                </div>
+                <div>
+                  <span className="tale-mood">{s.case!.mood}</span>
+                  <h3>{s.case!.title}</h3>
+                  <p>{s.case!.subtitle}</p>
+                </div>
+                <button
+                  disabled={!!starting}
+                  onClick={() => router.push(`/play/${s.id}`)}
+                >
+                  {s.status === "active"
+                    ? "Continue the tale"
+                    : "Revisit the tale"}
+                  <ArrowRight size={17} />
+                </button>
+                <span className="tale-state">
+                  {s.status === "solved" ? (
+                    <>
+                      <Check size={12} /> SOLVED
+                    </>
+                  ) : s.status === "revealed" ? (
+                    "REVEALED"
+                  ) : (
+                    `${s.questions} QUESTIONS`
+                  )}
+                </span>
+              </article>
+            ))}
+          </div>
+        </section>
+      )}
+      <section className="tale-shelf" id="collection">
+        <div className="shelf-heading">
+          <div>
+            <span className="eyebrow">
+              DUSTY BOOKS. DELICIOUSLY ODD SECRETS.
+            </span>
+            <h2>Stories on the shelf</h2>
+          </div>
+          <div className="shelf-filters" aria-label="Filter cases">
             <button
               className={filter === "all" ? "selected" : ""}
               onClick={() => setFilter("all")}
             >
-              All cases
+              All tales
             </button>
             <button
               className={filter === "active" ? "selected" : ""}
               onClick={() => setFilter("active")}
             >
-              In progress
+              Unfinished
             </button>
           </div>
         </div>
-        {!available && (
-          <p className="notice">
-            The host is temporarily unavailable. Existing investigations are
-            safely saved.
-          </p>
-        )}
-        {error && (
-          <p role="alert" className="notice error">
-            {error}
-          </p>
-        )}
-        <div className="case-grid">
+        <div className="tale-grid">
           {catalog
             .filter(
               (c) =>
@@ -164,23 +352,23 @@ export function Library({
                 (s) => s.caseId === c.id && s.status === "solved",
               );
               return (
-                <article className="case-card" key={c.id}>
-                  <div className="case-image">
+                <article className="tale-card" key={c.id}>
+                  <div className="tale-illustration">
                     <CaseArt id={c.id} />
-                    <span className="case-tag">CASE {c.number}</span>
+                    <span className="tale-number">TALE {c.number}</span>
                     {solved && (
-                      <span className="solved-tag">
-                        <Check size={12} /> SOLVED
+                      <span className="tale-solved">
+                        <Check size={13} /> SOLVED
                       </span>
                     )}
                   </div>
-                  <div className="case-copy">
-                    <span className="case-category">{c.category}</span>
+                  <div className="tale-content">
+                    <span className="tale-category">{c.category}</span>
                     <h3>{c.title}</h3>
                     <p>{c.subtitle}</p>
-                    <div className="case-meta">
+                    <div className="tale-meta">
                       <span>
-                        <span className={`difficulty-dot ${c.id}`} />
+                        <Sparkles size={13} />
                         {c.difficulty}
                       </span>
                       <span>
@@ -190,18 +378,17 @@ export function Library({
                     </div>
                     <button
                       disabled={!!starting || (!available && !active)}
-                      className="case-open"
                       onClick={() =>
-                        active ? router.push(`/play/${active.id}`) : start(c.id)
+                        active
+                          ? router.push(`/play/${active.id}`)
+                          : void start(c.id)
                       }
                     >
-                      <span>
-                        {active ? "Continue investigating" : "Open case file"}
-                      </span>
+                      {active ? "Continue the tale" : "Unroll the story"}
                       {starting === c.id ? (
-                        <LoaderCircle className="spin" size={18} />
+                        <LoaderCircle className="spin" size={17} />
                       ) : (
-                        <ArrowRight size={18} />
+                        <ArrowRight size={17} />
                       )}
                     </button>
                   </div>
@@ -210,61 +397,58 @@ export function Library({
             })}
         </div>
         {filter === "active" &&
-          !sessions.some((s) => s.status === "active") && (
-            <div className="empty-state">
-              <Eye size={30} />
-              <h3>Your next story is waiting.</h3>
-              <p>Open a case to begin your first investigation.</p>
-              <button className="text-button" onClick={() => setFilter("all")}>
-                Explore all cases <ArrowRight size={16} />
-              </button>
+          !sessions.some(
+            (s) => !s.case?.generated && s.status === "active",
+          ) && (
+            <div className="shelf-empty">
+              <Eye size={28} />
+              <p>No unfinished tales on this shelf. A fresh mystery awaits.</p>
+              <button onClick={() => setFilter("all")}>Browse the shelf</button>
             </div>
           )}
       </section>
-      <section id="how-it-works" className="how-section">
-        <div className="how-intro">
-          <span className="eyebrow">THE ART OF ASKING</span>
+      <section className="tavern-how" id="how-it-works">
+        <div className="how-title">
+          <span className="eyebrow">THE TAVERN'S THREE RULES</span>
           <h2>
-            You bring the questions.
+            Curiosity is your
             <br />
-            We keep the secret.
+            only weapon.
           </h2>
-          <p>Inspired by Turtle Soup, the classic lateral-thinking game.</p>
+          <p>
+            Turtle Soup: a game of lateral thinking.
+            <br />
+            No dice rolls. Just the right questions.
+          </p>
         </div>
-        <div className="how-steps">
-          {[
-            {
-              icon: Eye,
-              n: "01",
-              title: "Notice the strange",
-              body: "Read a scene that does not quite add up. Every word might matter.",
-            },
-            {
-              icon: MessageCircle,
-              n: "02",
-              title: "Question your assumptions",
-              body: "Ask the host yes-or-no questions. Follow your curiosity, one thought at a time.",
-            },
-            {
-              icon: NotebookPen,
-              n: "03",
-              title: "Connect the story",
-              body: "Use your notebook, explain the truth, and see the whole picture.",
-            },
-          ].map((s) => (
-            <div key={s.n}>
-              <span className="step-number">{s.n}</span>
-              <s.icon size={21} strokeWidth={1.4} />
-              <h3>{s.title}</h3>
-              <p>{s.body}</p>
-            </div>
-          ))}
-        </div>
+        {[
+          {
+            n: "I",
+            icon: Eye,
+            title: "Read the strange",
+            body: "A scene that should not make sense. Notice what feels out of place.",
+          },
+          {
+            n: "II",
+            icon: MessageCircle,
+            title: "Question the keeper",
+            body: "Ask one yes-or-no question at a time. The truth will not change.",
+          },
+          {
+            n: "III",
+            icon: NotebookPen,
+            title: "Unravel the truth",
+            body: "Gather your clues and tell the whole story. Every odd detail has a reason.",
+          },
+        ].map((s) => (
+          <div className="tavern-rule" key={s.n}>
+            <span className="rule-number">{s.n}</span>
+            <s.icon size={26} strokeWidth={1.5} />
+            <h3>{s.title}</h3>
+            <p>{s.body}</p>
+          </div>
+        ))}
       </section>
-      <div className="closing-line">
-        <Sparkles size={18} />
-        <span>The best clue is sometimes the assumption you let go of.</span>
-      </div>
       <Footer />
     </main>
   );

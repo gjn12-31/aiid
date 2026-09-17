@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Fingerprint, ArrowUpRight } from "lucide-react";
+import { Flame, ArrowUpRight } from "lucide-react";
 export function Brand({ small = false }: { small?: boolean }) {
   return (
     <Link
@@ -7,11 +7,13 @@ export function Brand({ small = false }: { small?: boolean }) {
       className={`brand ${small ? "small-brand" : ""}`}
       aria-label="Behind the Mystery home"
     >
-      <Fingerprint size={small ? 28 : 34} strokeWidth={1.25} />
+      <span className="brand-lantern">
+        <Flame size={small ? 28 : 34} strokeWidth={1.4} />
+      </span>
       <span>
-        BEHIND
+        Behind
         <br />
-        <b>THE MYSTERY</b>
+        <b>the Mystery</b>
       </span>
     </Link>
   );
@@ -20,7 +22,7 @@ export function Footer() {
   return (
     <footer className="site-footer">
       <span>
-        Behind the Mystery <i> / </i> An independent mystery collection
+        Behind the Mystery <i> / </i> A tavern for curious souls
       </span>
       <span>
         Stay curious. Question the obvious. <ArrowUpRight size={14} />

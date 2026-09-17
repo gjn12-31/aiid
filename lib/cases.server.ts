@@ -1,5 +1,5 @@
 import "server-only";
-import type { CaseId } from "./types";
+import type { BuiltInCaseId, CaseSummary } from "./types";
 export type Fact = { id: string; statement: string };
 export type CaseSecret = {
   version: number;
@@ -10,7 +10,8 @@ export type CaseSecret = {
   insight: string;
   counterexamples: string[];
 };
-export const caseSecrets: Record<CaseId, CaseSecret> = {
+export type CaseDefinition = { summary: CaseSummary; secret: CaseSecret };
+export const caseSecrets: Record<BuiltInCaseId, CaseSecret> = {
   monopoly: {
     version: 1,
     facts: [

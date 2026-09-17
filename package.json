@@ -11,11 +11,15 @@
     "start": "next start",
     "typecheck": "tsc --noEmit",
     "test": "node --conditions=react-server --import tsx --test tests/*.test.ts",
-    "test:live": "node --env-file=.env.local --conditions=react-server --import tsx scripts/check-host.ts"
+    "test:live": "node --env-file=.env.local --conditions=react-server --import tsx scripts/check-host.ts",
+    "test:generation": "node --env-file=.env.local --conditions=react-server --import tsx scripts/check-generation.ts"
   },
   "dependencies": {
     "@fontsource/dm-sans": "5.3.0",
     "@fontsource/fraunces": "5.3.0",
+    "@fontsource/im-fell-english": "5.3.0",
+    "@fontsource/patrick-hand": "5.3.0",
+    "@fontsource/pirata-one": "5.3.0",
     "lucide-react": "^0.577.0",
     "next": "16.3.5",
     "react": "^19.2.0",
