@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>🐢 Turtle Soup — Lateral Thinking Mysteries</title>
+<style>
+  :root{
+    --bg:#0b0f14; --panel:#11161d; --panel2:#161d26; --line:#232d3a;
+    --ink:#dce6f0; --dim:#8b98a8; --gold:#d9a441; --green:#57c98a; --red:#e06c5f;
+    --gm:#182230; --player:#123527;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
+    font:16px/1.55 "Segoe UI",system-ui,-apple-system,sans-serif}
+  .wrap{max-width:860px;margin:0 auto;padding:18px 16px 60px}
+  header{display:flex;align-items:center;gap:12px;padding:10px 0 18px;
+    border-bottom:1px solid var(--line);margin-bottom:20px}
+  header .logo{font-size:34px}
+  header h1{margin:0;font-size:22px;letter-spacing:3px;color:var(--gold);font-weight:600}
+  header small{display:block;color:var(--dim);letter-spacing:1px;font-size:11px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px 22px;margin-bottom:16px}
+  h2{margin:0 0 12px;font-size:15px;letter-spacing:2px;color:var(--gold);text-transform:uppercase}
+  label{display:block;color:var(--dim);font-size:13px;margin:14px 0 6px;letter-spacing:1px}
+  select{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--line);
+    background:var(--panel2);color:var(--ink);font-size:15px}
+  .btn{display:inline-block;padding:11px 22px;border-radius:10px;border:1px solid var(--gold);
+    background:linear-gradient(180deg,#2a2416,#1c1a12);color:var(--gold);font-size:15px;font-weight:600;
+    letter-spacing:1px;cursor:pointer;transition:.15s}
+  .btn:hover{filter:brightness(1.2)}
+  .btn.small{padding:6px 12px;font-size:12px;border-color:var(--line);color:var(--dim);background:var(--panel2)}
+  .btn.small:hover{color:var(--ink)}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .case{border-left:4px solid var(--gold)}
+  .case .meta{color:var(--dim);font-size:12px;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px}
+  .case .surface{font-family:Georgia,"Times New Roman",serif;font-size:19px;line-height:1.6;color:#f0e6cf}
+  .hud{display:flex;gap:10px;flex-wrap:wrap}
+  .hud .stat{flex:1;min-width:110px;background:var(--panel2);border:1px solid var(--line);border-radius:10px;
+    padding:8px 12px;text-align:center}
+  .hud .stat b{display:block;font-size:18px;color:var(--gold)}
+  .hud .stat span{font-size:11px;color:var(--dim);letter-spacing:1px}
+  #chat{display:flex;flex-direction:column;gap:10px;max-height:46vh;overflow-y:auto;padding:4px 6px;margin-bottom:12px}
+  .msg{max-width:82%;padding:10px 14px;border-radius:14px;white-space:pre-wrap;animation:pop .18s ease-out}
+  .msg.gm{align-self:flex-start;background:var(--gm);border:1px solid var(--line);border-bottom-left-radius:4px}
+  .msg.player{align-self:flex-end;background:var(--player);border:1px solid #1e4a36;border-bottom-right-radius:4px;color:#cde8d8}
+  .msg.sys{align-self:center;background:none;border:none;color:var(--dim);font-size:13px;text-align:center;font-style:italic}
+  @keyframes pop{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+  form#qform{display:flex;gap:8px}
+  #qin{flex:1;padding:12px 14px;border-radius:10px;border:1px solid var(--line);
+    background:var(--panel2);color:var(--ink);font-size:15px;outline:none}
+  #qin:focus{border-color:var(--gold)}
+  .cmds{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 14px}
+  .reveal h2{color:var(--green)}
+  .reveal .label{color:var(--dim);font-size:12px;letter-spacing:2px;text-transform:uppercase;margin:16px 0 4px}
+  .reveal p{margin:6px 0}
+  .hidden{display:none!important}
+  footer{margin-top:26px;color:#5a6675;font-size:12px;text-align:center;letter-spacing:1px}
+  .verdict{font-weight:700;letter-spacing:1px}
+  .v-yes{color:var(--green)} .v-no{color:var(--red)} .v-part{color:var(--gold)}
+  ul.tight{margin:6px 0;padding-left:20px} ul.tight li{margin:3px 0}
+  .bar{height:8px;border-radius:6px;background:var(--panel2);border:1px solid var(--line);overflow:hidden;margin-top:6px}
+  .bar i{display:block;height:100%;background:linear-gradient(90deg,#8a6d2f,var(--gold));width:0;transition:width .4s}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo">🐢</div>
+    <div><h1>TURTLE SOUP</h1><small>LATERAL-THINKING MYSTERIES</small></div>
+  </header>
+
+  <!-- ============ START SCREEN ============ -->
+  <section id="start-screen" class="card">
+    <h2>New Game</h2>
+    <p style="color:var(--dim);margin:0 0 6px">I will give you a strange situation. Your job is to discover what
+    really happened by asking <b style="color:var(--ink)">yes/no questions</b>. I answer:
+    ✅ YES &nbsp; ❌ NO &nbsp; ➗ PARTIALLY &nbsp; ⚪ IRRELEVANT</p>
+    <label>Difficulty</label>
+    <select id="sel-diff">
+      <option value="EASY">1 · Easy</option>
+      <option value="MEDIUM" selected>2 · Medium</option>
+      <option value="HARD">3 · Hard</option>
+      <option value="EXPERT">4 · Expert</option>
+      <option value="RANDOM">5 · Random</option>
+    </select>
+    <label>Category</label>
+    <select id="sel-cat">
+      <option value="RANDOM" selected>Random</option>
+      <option>Logical</option><option>Mystery</option><option>Crime</option>
+      <option>Horror</option><option>Funny</option><option>Emotional</option>
+      <option>Psychological</option><option>Sci-Fi</option>
+    </select>
+    <div class="row" style="margin-top:20px">
+      <button class="btn" id="btn-start">START</button>
+      <button class="btn small" id="btn-rules">RULES</button>
+    </div>
+  </section>
+
+  <!-- ============ GAME SCREEN ============ -->
+  <section id="game-screen" class="hidden">
+    <div class="card case">
+      <div class="meta" id="g-meta"></div>
+      <div class="surface" id="g-surface"></div>
+    </div>
+    <div class="hud card" style="padding:12px">
+      <div class="stat"><b id="h-q">0</b><span>QUESTIONS</span></div>
+      <div class="stat"><b id="h-hint">0</b><span>HINTS USED</span></div>
+      <div class="stat"><b id="h-score">100</b><span>SCORE</span></div>
+      <div class="stat" style="flex:2"><b id="h-prog" style="font-size:14px;padding-top:3px">0%</b><span>PROGRESS</span>
+        <div class="bar"><i id="h-bar"></i></div></div>
+    </div>
+    <div class="card" style="padding:14px">
+      <div id="chat"></div>
+      <div class="cmds">
+        <button class="btn small" data-cmd="HINT">💡 HINT</button>
+        <button class="btn small" data-cmd="PROGRESS">📊 PROGRESS</button>
+        <button class="btn small" data-cmd="RECAP">📝 RECAP</button>
+        <button class="btn small" data-cmd="THEORY: ">🧠 THEORY</button>
+        <button class="btn small" data-cmd="GIVE UP">🏳 GIVE UP</button>
+        <button class="btn small" data-cmd="NEW GAME">🔄 NEW GAME</button>
+      </div>
+      <form id="qform" autocomplete="off">
+        <input id="qin" placeholder="Ask a yes/no question… (or type HINT / PROGRESS / RECAP / THEORY: … / GIVE UP)">
+        <button class="btn" type="submit">ASK</button>
+      </form>
+    </div>
+  </section>
+
+  <!-- ============ REVEAL SCREEN ============ -->
+  <section id="reveal-screen" class="card reveal hidden"></section>
+
+  <footer>Based on the Turtle Soup (海龟汤) Game Master specification · everything runs locally in this file</footer>
+</div>
+
+<script>
+/* ================================================================
+   TURTLE SOUP — a self-contained lateral-thinking mystery game.
+   Each mystery locks a Soup Bottom (facts) before play; yes/no
+   questions are matched against ordered rules; theories are scored
+   against the key facts. Commands per the Game Master spec.
+   ================================================================ */
+
+const EMO = {YES:"✅ YES", NO:"❌ NO", PARTIALLY:"➗ PARTIALLY", IRRELEVANT:"⚪ IRRELEVANT"};
+
+/* ---------- mystery database ---------- */
+const MYSTERIES = [
+{
+  id:"monopoly", title:"The Bankrupt Driver", diff:"EASY", cats:["Funny","Logical"],
+  surface:"A man pushes his car to a hotel, knocks on the door, and tells the owner he is bankrupt. The owner smiles. Nobody calls the police.",
+  bottom:["Pushing a small metal car token across a Monopoly board, the player landed on an opponent's property — where a hotel piece stood. The rent far exceeded his remaining play money: 'bankrupt' in the game.",
+          "He knocked on the hotel — a tiny green plastic building — and announced his ruin to the 'owner': his smirking friend across the table."],
+  misdirect:"We picture a real road, a real car, a real hotel — the wording borrows the language of the everyday world.",
+  keyClue:"Nothing about the situation is dramatic enough for the police — a hint that the stakes are small. Very small.",
+  shortPath:"'Is this the real world?' → NO. 'Is it a game?' → YES. 'A board game about property?' → solved.",
+  facts:[
+    {id:"f1",area:"where this takes place",core:true,text:"He was playing the board game Monopoly.",kw:[["monopoly"],["board","game"]]},
+    {id:"f2",area:"what the 'car' is",core:true,text:"The 'car' was his game token — a small playing piece.",kw:[["token"],["piece"],["game","car"]]},
+    {id:"f3",area:"why he is 'bankrupt'",core:true,text:"Landing on the hotel property, he owed rent he could not pay — bankrupt within the game.",kw:[["rent"],["could","not","pay"],["bankrupt","game"]]},
+    {id:"f4",area:"who the 'owner' is",core:true,text:"The 'hotel owner' is just a fellow player who owns that property.",kw:[["player","owns"],["fellow","player"],["other","player"]]}],
+  hints:["Think about where exactly this takes place — is it the real world?",
+         "The car and the hotel are both small enough to hold in your hand.",
+         "He is sitting at a table, playing a board game about buying property."],
+  rules:[
+    {re:/monopol|board ?game|boardgame/,a:"YES",fact:"f1",note:"That is the heart of it."},
+    {re:/\b(game|playing|played|player|dice|token|piece|turn|table)\b/,a:"YES",fact:"f1"},
+    {re:/real (car|world|hotel|road|life)|realit(y|ies)|driv(e|ing|er)|engine|gas|petrol|fuel|break ?down|wheel/,a:"NO",log:"This does not take place in the real world — and that is the biggest clue."},
+    {re:/bankrupt/,a:"PARTIALLY",fact:"f3",note:"He truly says it — but not about real money."},
+    {re:/hotel/,a:"PARTIALLY",fact:"f4",note:"A 'hotel' is involved — but not one you can walk into."},
+    {re:/police|arrest|crime|rob|steal|jail/,a:"NO",log:"No crime, no police."},
+    {re:/die|dead|death|kill|hurt|injur|blood/,a:"NO",log:"Nobody is harmed."},
+    {re:/chess|card game|poker|video ?game|casino|gambl|roulette/,a:"NO",log:"Not that kind of game."},
+    {re:/owner/,a:"YES",fact:"f4"},
+    {re:/money|pay|cash|poor|debt/,a:"PARTIALLY",fact:"f3",note:"Money matters here — but play money."},
+    {re:/wife|family|child|age|old|job|weather|city|town|country|night|desert/,a:"IRRELEVANT"}
+  ]
+},
+{
+  id:"candles", title:"The Countdown Cakes", diff:"EASY", cats:["Emotional"],
+  surface:"Every year on her birthday, a girl receives an anonymous cake with candles — always one fewer than the year before. This year the cake arrives with no candles at all, and she cries with joy.",
+  bottom:["The girl's father has been in prison since she was small. Early on they agreed on a tradition: every birthday he would send a cake whose candles showed the years remaining until his release — one candle fewer each year, one year closer.",
+          "This year the cake arrived with no candles: his release date has come. He is coming home. The girl cried with joy because the long countdown finally reached zero."],
+  misdirect:"We assume birthday candles count a person's age — a number that only ever grows.",
+  keyClue:"A number that always shrinks by exactly one is a countdown, not an age.",
+  shortPath:"'Do the candles stand for her age?' → NO. 'Do they count time?' → YES. 'Counting down to something?' → YES. 'To a reunion with someone she cannot see?' → solved.",
+  facts:[
+    {id:"f1",area:"what the candles mean",core:true,text:"The candle count was a countdown — one year closer with each cake.",kw:[["count","down"],["years","remaining"],["counting","time"]]},
+    {id:"f2",area:"who sends the cakes",core:true,text:"The cakes were sent by her father, who has been in prison for years.",kw:[["father"],["dad"],["prison"],["in","jail"]]},
+    {id:"f3",area:"the promise behind the number",text:"The candles meant the years remaining until his release — a tradition between father and daughter.",kw:[["tradition"],["promise"],["until","release"]]},
+    {id:"f4",area:"what zero means this year",core:true,text:"Zero candles means his release is now — he is coming home, and she knows it.",kw:[["coming","home"],["release","now"],["reunion"],["zero","release"]]}],
+  hints:["The number of candles is the key — what can a number that always shrinks mean?",
+         "The sender chose each number deliberately — it counts time.",
+         "The cakes come from someone she cannot see — someone counting down to a reunion."],
+  rules:[
+    {re:/count ?down|years? (left|remaining)|less each year|fewer each year/,a:"YES",fact:"f1"},
+    {re:/candle.*mean|what.*candle|number|symbol/,a:"PARTIALLY",fact:"f1",note:"You are circling the right thing — ask what the number does."},
+    {re:/candle.*(important|matter|special|key|secret|mean)|important/,a:"YES",fact:"f1",note:"The candles are the whole key."},
+    {re:/(happy|joy|sad|cr(y|ies|ying)|tears|emotion)/,a:"PARTIALLY",fact:"f4",note:"Joyful tears — you have the emotion; now find the reason."},
+    {re:/her age|how old|age of/,a:"NO",log:"The candles never represented her age."},
+    {re:/father|dad|parent/,a:"YES",fact:"f2"},
+    {re:/mother|brother|sister|grandm|grandp|uncle|aunt|friend|stranger|stalker/,a:"NO",log:"Not that sender."},
+    {re:/prison|jail|inmate|imprison|locked up|sentence/,a:"YES",fact:"f2"},
+    {re:/army|soldier|war|sailor|navy|abroad|overseas|hospital|sick|ill|dying|disease/,a:"NO",log:"He is not far away for those reasons."},
+    {re:/dead|died|death|funeral|grave|ghost/,a:"NO",log:"Nobody has died."},
+    {re:/tradition|promise|agreement|deal/,a:"YES",fact:"f3"},
+    {re:/release|freed|free|parole|coming home|reunion|out soon/,a:"YES",fact:"f4"},
+    {re:/more years|next year|longer/,a:"NO",log:"There are no more years to wait."},
+    {re:/she (knew|knows)|expect|surprise/,a:"PARTIALLY",fact:"f4",note:"She knew exactly what it meant."},
+    {re:/magic|curse|supernatural|spell|witch/,a:"NO",log:"Nothing supernatural."},
+    {re:/cake|chocolate|flavor|bakery|baker/,a:"PARTIALLY",note:"A bakery may deliver it — but the sender is the point."},
+    {re:/poison|danger/,a:"NO",log:"The cake is perfectly harmless."},
+    {re:/birthday|party|friends|school/,a:"IRRELEVANT"}
+  ]
+},
+{
+  id:"waiter", title:"The Robber Who Waited", diff:"EASY", cats:["Crime"],
+  surface:"A man hands the bank teller a note demanding money. He takes the cash, walks outside, sits down on the curb — and waits for the police to arrive. He never tries to escape.",
+  bottom:["The man was elderly and homeless, in the middle of a brutal winter. Desperate for food, warmth and a roof, he decided to get himself arrested: a note demanding money — no weapon, no violence — then the cash, then the curb outside, waiting.",
+          "Prison, with its guaranteed meals, heating and a bed, was the only 'help' he believed was still available to him."],
+  misdirect:"We assume a robber wants money and escape. He wanted neither.",
+  keyClue:"He never tried to leave — the robbery was the means; arrest was the goal.",
+  shortPath:"'Did he want to escape?' → NO. 'Did he want the money?' → NO. 'Did he want to be arrested?' → YES. 'Because prison gives him something he lacks?' → solved.",
+  facts:[
+    {id:"f1",area:"what he actually wanted",core:true,text:"He wanted to be caught — the robbery was his way of getting arrested.",kw:[["wanted","arrested"],["get","caught"],["on","purpose"]]},
+    {id:"f2",area:"why prison appeals to him",core:true,text:"He wanted prison because it guarantees food and shelter.",kw:[["prison","food"],["food","and","shelter"],["warm","cell"]]},
+    {id:"f3",area:"his situation in life",core:true,text:"He was homeless and desperate — an old man in a cold winter with nowhere to go.",kw:[["homeless"],["nowhere","live"],["cold","winter"],["old","man","poor"]]},
+    {id:"f4",area:"how dangerous the robbery was",text:"He harmed no one — his only 'weapon' was the note.",kw:[["no","weapon"],["just","a","note"],["harm","no","one"]]}],
+  hints:["Ask yourself: did he actually want the money?",
+         "He needed something a prison provides better than the streets.",
+         "Winter. An old man with nowhere to sleep. Three meals and a warm cell start to sound like rescue."],
+  rules:[
+    {re:/escape|run away|flee|get away|hide|disguise/,a:"NO",log:"He did everything except run."},
+    {re:/want.*(arrest|caught|jail|prison)|on purpose|intentional|deliberate/,a:"YES",fact:"f1"},
+    {re:/for the money|need(ed)? the money|wants? money|greed|rich|pay debt|gambl/,a:"NO",log:"The money itself was not the point."},
+    {re:/money|cash|bank|teller|note/,a:"PARTIALLY",fact:"f4",note:"The note and the bank are stage props — ask what they were for."},
+    {re:/gun|weapon|armed|violence|knife|threat/,a:"NO",log:"No weapon — just a note."},
+    {re:/kill|hurt|injur|shot/,a:"NO",log:"Nobody was hurt."},
+    {re:/food|meal|eat|hungry|starv/,a:"YES",fact:"f2"},
+    {re:/shelter|warm|roof|bed|sleep|homeless|nowhere/,a:"YES",fact:"f3"},
+    {re:/winter|cold|snow|freez/,a:"YES",fact:"f3"},
+    {re:/sick|ill|medical|doctor|hospital|medicine|dying/,a:"NO",log:"His body was fine; his situation was not."},
+    {re:/family|child|wife|son|daughter/,a:"NO",log:"No family motivated this."},
+    {re:/job|fired|unemploy|work/,a:"IRRELEVANT"},
+    {re:/famous|news|attention|media/,a:"NO",log:"He did not want attention."},
+    {re:/suicide|die|death|kill himself/,a:"NO",log:"He did not want to die — quite the opposite."},
+    {re:/friend|protest|political/,a:"NO"},
+    {re:/amount|how much|dollars/,a:"IRRELEVANT"}
+  ]
+},
+{
+  id:"pilot", title:"The Pilot's Smile", diff:"MEDIUM", cats:["Mystery"],
+  surface:"A man calmly lands a passenger plane. All 200 people aboard survive, and the passengers applaud him. At the gate, the police are waiting for him — and he smiles.",
+  bottom:["He was a passenger — a former professional pilot who, six years earlier, had vanished while awaiting sentencing for a large investment fraud, and had lived ever since under a false name.",
+          "Mid-flight, both pilots collapsed from food poisoning after sharing the same tainted meal. When the crew asked whether anyone could fly, he stepped forward and landed the plane safely.",
+          "Coordinating with the control tower, he had to identify himself — and he gave his real name, knowing it sat in the warrant system. Police were waiting at the gate.",
+          "He smiled because he had made the choice with open eyes: two hundred lives were worth ending six years of freedom — and the running was finally over."],
+  misdirect:"We assume the applause and the arrest belong to the same event — that he did something wrong on this flight.",
+  keyClue:"The arrest was arranged before the plane ever landed. His name, not his landing, was the crime.",
+  shortPath:"'Was he part of the crew?' → NO. 'Can he fly?' → YES. 'Is he wanted for an old crime?' → YES. 'Did the police learn who he was during the flight?' → YES → solved.",
+  facts:[
+    {id:"f1",area:"who he was on the plane",core:true,text:"He was a passenger, not a member of the crew.",kw:[["passenger"],["not","crew"]]},
+    {id:"f2",area:"his ability to fly",core:true,text:"He is a fully trained pilot — flying was once his profession.",kw:[["trained","pilot"],["used","to","fly"],["former","pilot"],["knows","how","to","fly"],["pilot"]]},
+    {id:"f3",area:"what happened to the real pilots",core:true,text:"Both real pilots were incapacitated mid-flight by food poisoning from the same meal.",kw:[["food","poisoning"],["pilots","sick"],["both","pilots"]]},
+    {id:"f4",area:"his secret past",core:true,text:"He is a fugitive wanted for a large non-violent financial crime, living six years under a false identity.",kw:[["fraud"],["fugitive"],["false","identity"],["financial","crime"]]},
+    {id:"f5",area:"how the police knew",core:true,text:"Talking to the control tower, he had to give his real name — which instantly flagged his outstanding warrant.",kw:[["gave","name"],["control","tower"],["radio","name"],["real","name"]]},
+    {id:"f6",area:"why he smiled",text:"He smiled because he chose to save 200 people knowing it would cost his freedom — and the running was over.",kw:[["knew","arrest"],["accepted"],["worth","it"],["chose","to","save"]]}],
+  hints:["Ask who he was on that plane — crew, or passenger?",
+         "He knew how to fly. Ask what he did before this flight… and what he has been running from.",
+         "To land the plane he had to talk to the control tower — and say who he is."],
+  rules:[
+    {re:/passenger|in (the )?cabin|seat 2|economy/,a:"YES",fact:"f1"},
+    {re:/was (he|n'?t).*(the|a) pilot|crew member|assigned|scheduled|on duty|the plane'?s pilot|captain of/,a:"PARTIALLY",fact:"f1",note:"He can fly a plane — but he was not supposed to be flying THIS one."},
+    {re:/\bpilot\b|fly|flying|licen[cs]e|aviator|airline/,a:"YES",fact:"f2"},
+    {re:/(pilot|captain|crew).*(sick|ill|incapacit|unconscious|collapse|poison)|(sick|ill|poison|collapse).*(pilot|captain|crew)/,a:"YES",fact:"f3"},
+    {re:/food poison|the meal|ate|fish|sandwich|dinner/,a:"YES",fact:"f3"},
+    {re:/engine|storm|weather|turbulence|mechanical|fuel|crash|lightning/,a:"NO",log:"Nothing was wrong with the plane itself."},
+    {re:/hijack|bomb|threat|weapon|hostage|terror|force/,a:"NO",log:"He threatened no one."},
+    {re:/wanted|fugitive|prison|escapee|convict|record|criminal|crime|illegal|did (he do|something) wrong/,a:"YES",fact:"f4"},
+    {re:/(in )?danger|emergency|in trouble/,a:"PARTIALLY",fact:"f3",note:"Yes — but not the plane itself."},
+    {re:/murder|kill|violent|armed|dangerous|blood/,a:"NO",log:"Nothing violent — his crime is financial."},
+    {re:/fraud|steal|stole|rob|money|scam|financial|investment|embezzl/,a:"YES",fact:"f4"},
+    {re:/((fake|false|new) (identity|name))|stolen name|assumed name/,a:"YES",fact:"f4"},
+    {re:/radio|tower|air traffic|atc|control|communicat|mayday|called for help/,a:"YES",fact:"f5"},
+    {re:/his name|real name|said who|identify/,a:"YES",fact:"f5",note:"His own name — that is the hinge."},
+    {re:/smile|smiling|happy|glad|relieve/,a:"YES",fact:"f6",note:"It is the key to his state of mind."},
+    {re:/he (knew|expected|know)/,a:"YES",fact:"f6",note:"He knew exactly what was coming."},
+    {re:/flight attendant|steward/,a:"PARTIALLY",note:"One of them let him into the cockpit — but they did not fly."},
+    {re:/die|dead|died|anyone (die|hurt|kill)/,a:"NO",log:"Everyone survived."},
+    {re:/ghost|supernatural|dream/,a:"NO"},
+    {re:/airline|country|city|weather|day|night|200/,a:"IRRELEVANT"}
+  ]
+},
+{
+  id:"serving", title:"The Extra Serving", diff:"MEDIUM", cats:["Horror"],
+  surface:"For a week, a woman cooks dinner for two but always eats alone. On the seventh night she places both plates on the table, softly says 'bon appétit,' and calls the police. The man they arrest had been inside her apartment the whole time.",
+  bottom:["A stranger had been secretly living in the crawlspace above her wardrobe for months. She grew suspicious when food kept disappearing and small things moved while she was out.",
+          "Rather than confront him, she stayed calm: cooking for two, watching, planning — making sure he stayed settled and confident he was undiscovered.",
+          "On the seventh night she set both plates, said 'bon appétit' to the hidden listener — a signal: I know you are there — and called the police, who found him and his nest."],
+  misdirect:"We assume the second plate was for someone absent — a memory, a ghost, an imaginary guest.",
+  keyClue:"Food that disappears while you live alone means someone is eating it.",
+  shortPath:"'Was anyone else in the apartment?' → YES. 'A guest she invited?' → NO. 'Was he hiding?' → YES. 'Did she already know?' → YES → solved.",
+  facts:[
+    {id:"f1",area:"who else was in the apartment",core:true,text:"A stranger was secretly living hidden inside her apartment.",kw:[["living","in","her"],["hiding","in"],["inside","apartment"],["crawl","space"]]},
+    {id:"f2",area:"how she knew",core:true,text:"She noticed food disappearing and small disturbances — that is how she knew.",kw:[["food","disappear"],["food","missing"],["noticed"]]},
+    {id:"f3",area:"why she kept cooking calmly",text:"She pretended not to know for days — to avoid alarming him while she planned.",kw:[["pretend"],["stay","calm"],["did","not","let","him","know"]]},
+    {id:"f4",area:"what the second plate meant",core:true,text:"The second plate was a signal to him — 'I know you are there' — keeping him calm and in place until police arrived.",kw:[["signal"],["let","him","know"],["second","plate"]]},
+    {id:"f5",area:"how long he had been there",text:"He had been there for months; police found his hiding place and his nest.",kw:[["months"],["nest"],["arrested","him"]]}],
+  hints:["Ask why the food was for two when she ate alone.",
+         "Food kept going missing before she ever cooked for two.",
+         "Someone could hear every word she said inside that apartment — and she knew it."],
+  rules:[
+    {re:/(anyone|someone|somebody) (else )?(in|inside) (the|her|his|an|a|that)? ?(apartment|house|home|flat|room)?|(was|is) (there|there someone|there anybody)/,a:"YES",fact:"f1"},
+    {re:/(was|is) (she|the woman) alone|live[sd]? alone|ate alone/,a:"NO",log:"Not as alone as she thought."},
+    {re:/hid(e|ing|den)|living (in|inside)|crawl ?space|attic|wardrobe|closet|ceiling|under (the )?bed|inside (her|the)/,a:"YES",fact:"f1"},
+    {re:/burglar|thief|rob|steal|stolen|valuables/,a:"NO",log:"He was not there to steal."},
+    {re:/food|leftovers?|missing|disappear|fridge|pantry|cupboard/,a:"YES",fact:"f2"},
+    {re:/(she|woman).*(knew|notice|suspect|aware|found out)/,a:"YES",fact:"f2"},
+    {re:/afraid|scared|terrified|fear|panic/,a:"YES",fact:"f3",note:"Yes — fear is exactly why she stayed calm."},
+    {re:/police|called|arrest/,a:"YES",fact:"f5"},
+    {re:/ghost|supernatural|demon|spirit|monster|haunt/,a:"NO",log:"Entirely human — that is the horror of it."},
+    {re:/husband|boyfriend|partner|ex|stalker|landlord|tenant|roommate/,a:"NO",log:"Not anyone she knew."},
+    {re:/child|son|daughter|baby/,a:"NO",log:"No child involved."},
+    {re:/poison|drugged|sleeping pill|trap/,a:"NO",log:"She never tried to harm or trap him herself."},
+    {re:/plate|second serving|dinner for two|two plates/,a:"YES",fact:"f4"},
+    {re:/calm him|keep him|lure|stall|wait for (the )?police/,a:"YES",fact:"f4"},
+    {re:/(how long|weeks?|months?|days?)/,a:"PARTIALLY",fact:"f5",note:"Longer than a week — the police were surprised too."},
+    {re:/hurt|kill|attack|violence|blood/,a:"NO",log:"He never harmed her — and she never gave him the chance."},
+    {re:/cat|dog|pet|animal|rats?/,a:"NO",log:"Not an animal."},
+    {re:/said bon appétit|spoke|talked|whisper/,a:"YES",fact:"f4",note:"Someone in that apartment could hear her perfectly."},
+    {re:/name|city|job|age/,a:"IRRELEVANT"}
+  ]
+},
+{
+  id:"shoes", title:"The New Shoes", diff:"MEDIUM", cats:["Logical"],
+  surface:"A woman buys a new pair of identical-looking shoes and returns to work happily. The next day she is fired from the job she loved.",
+  bottom:["She was the knife-thrower's assistant in a circus — the woman who stands against the board, perfectly still, night after night.",
+          "Her act depended on absolute precision: her old shoes fixed her standing height, so the knives' pattern landed safely around her.",
+          "The new shoes looked identical but had slightly higher heels; silently, she stood a few millimetres taller. The blades began creeping toward her — the act became life-threatening — and the circus dismissed her before someone was killed."],
+  misdirect:"We look for workplace drama — a mistake, a conflict — not geometry.",
+  keyClue:"The shoes were 'identical' to her eyes — but not to a blade's flight path.",
+  shortPath:"'Does her job involve danger?' → YES. 'Precision?' → YES. 'Did the shoes change something physical about her?' → YES. 'Her height?' → solved.",
+  facts:[
+    {id:"f1",area:"her profession",core:true,text:"She was a circus knife-thrower's assistant — the target who stands against the board.",kw:[["circus"],["knife","thrower"],["target"]]},
+    {id:"f2",area:"what her old shoes did",text:"Her act depended on exact, repeatable positioning — the old shoes fixed her height precisely.",kw:[["exact","position"],["same","height"],["precision"]]},
+    {id:"f3",area:"what changed with the new shoes",core:true,text:"The new 'identical' shoes had slightly higher heels, silently raising her standing height.",kw:[["higher","heel"],["taller"],["heel"]]},
+    {id:"f4",area:"why she was fired",core:true,text:"The knives began missing their safe marks — the act became dangerous, and the circus let her go before someone was killed.",kw:[["knives","off"],["dangerous"],["missed","their","mark"]]}],
+  hints:["Her job involved standing very still, in exactly the same spot, every night.",
+         "The shoes looked identical to her — but not to the knives.",
+         "A few millimetres higher or lower changes everything when blades are involved."],
+  rules:[
+    {re:/\b(job|work|profession|career|employment)\b/,a:"YES",fact:"f1",note:"Her job is the center of this."},
+    {re:/circus|carnival|perform|performer|show|entertain|act\b/,a:"YES",fact:"f1"},
+    {re:/knife|blade|axe|dagger|sword|thrower|target|board/,a:"YES",fact:"f1"},
+    {re:/office|desk|company|business|boss|colleague|client|computer/,a:"NO",log:"Not an office job."},
+    {re:/heel|height|taller|shorter|higher|lower|millimet|centimet|inch/,a:"YES",fact:"f3"},
+    {re:/shoe/,a:"PARTIALLY",fact:"f2",note:"The shoes matter — ask what changed about them."},
+    {re:/identical|look(ed)? the same|same shoes/,a:"PARTIALLY",fact:"f3",note:"They looked identical. That was the trap."},
+    {re:/die|died|killed|dead|injur|hurt|blood|cut/,a:"NO",log:"No one was hurt — that is what could have happened, not what did."},
+    {re:/clown|lion|tiger|animal|elephant/,a:"NO"},
+    {re:/model|runway|fashion|dancer|dance|singer|actor/,a:"NO",log:"Not that kind of stage."},
+    {re:/magic|trick/,a:"NO"},
+    {re:/secret|affair|pregnan|late|salary|money|contract|boss/,a:"NO",log:"No workplace drama — the reason is physical."},
+    {re:/fire|fired|dismiss|sack/,a:"PARTIALLY",fact:"f4",note:"Being fired is the consequence — ask what changed overnight."},
+    {re:/mistake|error|accident|fault/,a:"PARTIALLY",fact:"f4",note:"In a sense — but not one she was aware of."},
+    {re:/name|city|country|weather/,a:"IRRELEVANT"}
+  ]
+},
+{
+  id:"kidnap", title:"The Honest Kidnapper", diff:"HARD", cats:["Crime","Mystery"],
+  surface:"A kidnapper returns the missing child unharmed — and pays the ransom money back to the parents. The parents are arrested the same day; the kidnapper walks free.",
+  bottom:["The kidnapping was staged by the parents themselves. Their accomplice — a trusted family friend — hid the child comfortably while public donations poured in for the 'devastated family'.",
+          "When the friend asked for her share, the parents refused. Angry and disgusted by the donors they were deceiving, she returned the child unharmed, gave back the donation money, and confessed everything to the police.",
+          "The parents were arrested for fraud. She, having returned the money and cooperated fully, walked free."],
+  misdirect:"We assume a kidnapper who returns the child must be merciful — and that the parents are victims.",
+  keyClue:"She returned the money. Nobody in a real ransom ever gives the money back.",
+  shortPath:"'Was the child ever in danger?' → NO. 'Did the parents know the kidnapper?' → YES. 'Was money the motive — but not ransom?' → YES. 'Public donations?' → solved.",
+  facts:[
+    {id:"f1",area:"whether the kidnapping was real",core:true,text:"The kidnapping was staged — the child was never in danger.",kw:[["staged"],["fake","kidnapping"],["hoax"],["never","in","danger"]]},
+    {id:"f2",area:"who was behind it",core:true,text:"The parents organized it themselves, using their own child.",kw:[["parents","organiz"],["parents","behind"],["their","own","child"]]},
+    {id:"f3",area:"where the money came from",core:true,text:"The motive was money: public donations poured in for the 'victim's family'.",kw:[["donation"],["public","money"],["fundrais"]]},
+    {id:"f4",area:"who the kidnapper really was",core:true,text:"The 'kidnapper' was a friend and accomplice of the family, keeping the child safe.",kw:[["accomplice"],["family","friend"],["knew","the","family"]]},
+    {id:"f5",area:"why she returned everything",text:"The parents refused to share the donations — anger and conscience made her return the child, the money, and confess.",kw:[["refused","share"],["angry"],["revenge","conscience"],["confess"]]},
+    {id:"f6",area:"what crime the parents committed",core:true,text:"The parents' crime is fraud; her confession and cooperation set her free.",kw:[["fraud"],["scam"],["walked","free"]]}],
+  hints:["Ask who profited from the kidnapping — besides a ransom nobody paid.",
+         "The child was safe and comfortable the whole time. Who could guarantee that?",
+         "The kidnapper did not demand money at the end — she gave it back. What does that tell you?"],
+  rules:[
+    {re:/(was|is|were) (it|this|the kidnapping|the child) (actually )?(real|genuine)|(really|actually|for real).*(kidnap|stolen|took|abduct)/,a:"NO",fact:"f1",log:"That is exactly the crack in this story."},
+    {re:/child.*(hurt|harmed|injur|in danger|fear|trauma)/,a:"NO",fact:"f1",log:"The child was never in danger."},
+    {re:/child.*(safe|unharmed|fine|comfort)/,a:"YES",fact:"f1"},
+    {re:/stage|staged|fake|hoax|pretend|acted|set ?up/,a:"YES",fact:"f1"},
+    {re:/parents.*(involved|guilt|organi|plan|behind|paid|arrange)/,a:"YES",fact:"f2"},
+    {re:/their own child|their child/,a:"PARTIALLY",fact:"f2",note:"It is their own child — that is part of the scheme."},
+    {re:/ransom/,a:"PARTIALLY",fact:"f3",note:"A ransom was asked for — but the real money came from elsewhere."},
+    {re:/donation|public|fundrais|charity|go ?fund|kind strangers/,a:"YES",fact:"f3"},
+    {re:/insurance/,a:"NO",log:"No insurance involved."},
+    {re:/kidnapper.*(know|friend|accomplice|family|relative)|(was|were) (they|the family) (acquainted|friends)/,a:"YES",fact:"f4"},
+    {re:/kidnapper.*(man|male|guy|stranger|serial)/,a:"NO",log:"The kidnapper is a woman they knew well."},
+    {re:/revenge|angry|betray|argument|refuse|dispute|conscience/,a:"YES",fact:"f5"},
+    {re:/confess|told (the )?police|truth|witness/,a:"YES",fact:"f5"},
+    {re:/fraud|scam|deceiv|lie|faked/,a:"YES",fact:"f6"},
+    {re:/murder|kill|dead|died|blood/,a:"NO",log:"Nobody dies in this story."},
+    {re:/real kidnapper|stranger|outsider/,a:"NO",log:"There was no 'real' kidnapper."},
+    {re:/child.*(old|age|boy|girl)/,a:"IRRELEVANT"},
+    {re:/police.*stupid|incompetent/,a:"NO"},
+    {re:/city|country|name/,a:"IRRELEVANT"}
+  ]
+},
+{
+  id:"letter", title:"The Unwritten Letter", diff:"EXPERT", cats:["Sci-Fi","Psychological"],
+  surface:"A woman finds a letter in her own handwriting — a letter she has no memory of writing. She follows its instructions without hesitation, and by nightfall she is crying, but safe.",
+  bottom:["The woman is a protected witness against a criminal organization, hidden by an experimental program that periodically erases her memory so her cover stays perfect — even she cannot betray what she no longer knows.",
+          "After every reset, her past self leaves her a letter: safehouse, evidence, the next handler. That is the routine — it is how she trusts herself.",
+          "That morning, the letter warned her the handlers had been compromised and the organization was closing in. She followed her own handwriting without hesitation, escaped the trap, and by nightfall was safe — crying not from fear, but for the self she keeps losing."],
+  misdirect:"We assume that no memory of writing means someone else wrote it — or something supernatural.",
+  keyClue:"She trusted the letter instantly — because trusting her own hand is the entire system.",
+  shortPath:"'Is the handwriting truly hers?' → YES. 'Did she write it?' → YES. 'Does she have amnesia?' → YES. 'Is the amnesia deliberate — part of a program?' → YES → solved.",
+  facts:[
+    {id:"f1",area:"the handwriting",core:true,text:"The handwriting really was hers — not forged.",kw:[["her","own","handwriting"],["not","forged"],["genuine"]]},
+    {id:"f2",area:"who wrote the letter",core:true,text:"She wrote it herself — before her memory of writing it was erased.",kw:[["she","wrote"],["past","self"],["before","erase"]]},
+    {id:"f3",area:"her memory",core:true,text:"Her memory is periodically erased as part of an experimental witness-protection program.",kw:[["memory","erase"],["witness","protection"],["experimental","program"]]},
+    {id:"f4",area:"why her memory is erased",core:true,text:"She testified against a criminal organization; a clean memory protects her from interrogation — and from herself.",kw:[["testified"],["criminal","organization"],["protect"]]},
+    {id:"f5",area:"the routine after each reset",text:"Each reset, her past self leaves instructions — safehouse, evidence, next handler. Trusting the letter is the established routine.",kw:[["instructions"],["routine"],["every","reset"]]},
+    {id:"f6",area:"the danger that morning",text:"That morning, the handlers had been compromised — the letter warned her the organization was closing in.",kw:[["compromised"],["closing","in"],["danger","that","morning"]]},
+    {id:"f7",area:"what the tears were for",text:"She escaped the trap and reached safety — crying for the self she keeps losing.",kw:[["escaped","safe"],["crying","safe"],["what","she","loses"]]}],
+  hints:["The handwriting is genuinely hers — so when could she have written it?",
+         "Ask what could remove the memory of writing something.",
+         "People who erase your memory tend to leave instructions for the person who wakes up."],
+  rules:[
+    {re:/forg|fake|someone else wrote|copied/,a:"NO",fact:"f1",log:"Not forged — the handwriting is genuinely hers."},
+    {re:/handwriting.*(her|hers|real|genuine)|her.*handwriting/,a:"YES",fact:"f1"},
+    {re:/(did|she) (she )?wrote|written it|write it|herself/,a:"YES",fact:"f2",note:"She did write it — that is the heart of it."},
+    {re:/memory|remember|forgot|forget|amnesia|erase|erased|wipe/,a:"YES",fact:"f3"},
+    {re:/dream|sleep ?walk|hypnosi|drunk|drug|possess|curse/,a:"NO",log:"Nothing so mystical — and she was sober and awake when she wrote it."},
+    {re:/twin|sister|mother|clone|look ?alike/,a:"NO",log:"No look-alike wrote it."},
+    {re:/time travel|future self|sent (back|from)|time machine/,a:"PARTIALLY",fact:"f2",note:"A 'past self' wrote it — just not across time… across an erasure."},
+    {re:/witness|testif|court|trial|police|criminal|organization|mafia|gang|mob/,a:"YES",fact:"f4"},
+    {re:/protect|cover|identity|hidden|hide/,a:"YES",fact:"f4"},
+    {re:/program|experiment|treatment|doctor|clinic|agency|handler/,a:"YES",fact:"f3"},
+    {re:/instruction|routine|every time|each time|always|before/,a:"YES",fact:"f5"},
+    {re:/danger|trap|kill|threat|compromis|closing in|hunted/,a:"YES",fact:"f6"},
+    {re:/crying|tears|cried|sad|weep/,a:"YES",fact:"f7",note:"The tears are important — but not from fear."},
+    {re:/safe|escape|fled|survive/,a:"YES",fact:"f7"},
+    {re:/supernatural|ghost|magic|alien/,a:"NO",log:"Nothing supernatural."},
+    {re:/suicide|self ?harm|hurt herself/,a:"NO"},
+    {re:/job|work|ordinary|husband|child/,a:"IRRELEVANT"},
+    {re:/name|city|country/,a:"IRRELEVANT"}
+  ]
+}
+];
+
+/* ---------- game state ---------- */
+const S = {
+  m:null, discovered:new Set(), questions:0, hintLevel:0, hintsUsed:0,
+  score:100, ruledOut:[], over:false, lastId:null
+};
+
+const $ = id => document.getElementById(id);
+const chat = $("chat");
+
+function gm(text, cls){ addMsg(text,"gm"); }
+function addMsg(text, cls){
+  const d=document.createElement("div");
+  d.className="msg "+cls; d.textContent=text;
+  chat.appendChild(d); chat.scrollTop=chat.scrollHeight;
+}
+function sys(text){ addMsg(text,"sys"); }
+function hud(){
+  $("h-q").textContent=S.questions; $("h-hint").textContent=S.hintsUsed;
+  $("h-score").textContent=Math.max(0,S.score);
+  const pct = S.m ? Math.round(100*S.discovered.size/S.m.facts.length) : 0;
+  $("h-prog").textContent=pct+"%"; $("h-bar").style.width=pct+"%";
+}
+
+/* ---------- mystery selection ---------- */
+function pick(diff,cat){
+  let pool = MYSTERIES.filter(m => (diff==="RANDOM"||m.diff===diff) && (cat==="RANDOM"||m.cats.includes(cat)));
+  if(!pool.length){ sys("No mystery yet for that combination — here's a random one instead.");
+    pool = MYSTERIES.filter(m=>m.id!==S.lastId); }
+  if(pool.length>1) pool = pool.filter(m=>m.id!==S.lastId);
+  return pool[Math.floor(Math.random()*pool.length)];
+}
+
+function startGame(diff,cat){
+  S.m = pick(diff,cat); S.lastId=S.m.id;
+  S.discovered=new Set(); S.questions=0; S.hintLevel=0; S.hintsUsed=0;
+  S.score=100; S.ruledOut=[]; S.over=false;
+  $("start-screen").classList.add("hidden");
+  $("reveal-screen").classList.add("hidden");
+  $("reveal-screen").innerHTML="";
+  $("game-screen").classList.remove("hidden");
+  $("g-meta").textContent = "🐢 TURTLE SOUP — "+S.m.diff+" · Category: "+S.m.cats[0];
+  $("g-surface").textContent = S.m.surface;
+  chat.innerHTML="";
+  gm("🐢 The mystery is on the table. What happened?");
+  sys("Ask yes/no questions. Commands: HINT · PROGRESS · RECAP · THEORY: … · GIVE UP · NEW GAME");
+  hud();
+}
+
+/* ---------- question engine ---------- */
+const FALLBACKS = [
+  "⚪ IRRELEVANT.",
+  "⚪ IRRELEVANT — that doesn't affect the solution.",
+  "⚪ IRRELEVANT. Try a different angle.",
+  "⚪ IRRELEVANT — not part of this story."
+];
+const TAIL = [
+  {re:/ghost|supernatural|magic|magical|alien|monster|demon|curse|witch|paranormal|zombie|vampire|haunt/,a:"NO",log:"Nothing supernatural — this story stays in the real world."},
+  {re:/\b(hi|hello|hey|thanks?|thank you|bye|goodbye)\b/,a:"IRRELEVANT",note:"Save it for after the mystery."}
+];
+let fbIdx=0;
+
+function discover(id){ if(id && !S.discovered.has(id)){ S.discovered.add(id); } }
+
+function answerQuestion(q){
+  const lq = q.toLowerCase();
+  for(const r of [...S.m.rules, ...TAIL]){
+    if(r.re.test(lq)){
+      let out = EMO[r.a];
+      if(r.note) out += " — "+r.note;
+      if(r.a==="NO" && r.log) S.ruledOut.push(r.log);
+      if(r.a==="YES"||r.a==="PARTIALLY") discover(r.fact);
+      gm(out);
+      if(S.discovered.size===S.m.facts.length){
+        sys("You have uncovered every essential fact. Now put it together — state your THEORY: …");
+      }
+      return;
+    }
+  }
+  gm(FALLBACKS[fbIdx++ % FALLBACKS.length]);
+}
+
+/* ---------- theory evaluation ---------- */
+function theoryMatches(text){
+  const t=" "+text.toLowerCase().replace(/[^a-z0-9 ]/g," ")+" ";
+  const hits=new Set();
+  for(const f of S.m.facts){
+    outer: for(const grp of f.kw){
+      for(const w of grp){ if(!t.includes(" "+w+" ") && !t.includes(" "+w)) continue outer; }
+      hits.add(f.id); break;
+    }
+  }
+  return hits;
+}
+function evalTheory(text){
+  const hits=theoryMatches(text);
+  const cores=S.m.facts.filter(f=>f.core);
+  const coreHit=cores.filter(f=>hits.has(f.id)).length;
+  const ratio=hits.size/S.m.facts.length;
+  const missing=cores.filter(f=>!hits.has(f.id)&&!S.discovered.has(f.id));
+  if(coreHit===cores.length && ratio>=0.45){ return win(); }
+  if(coreHit>=Math.ceil(cores.length*0.6) && ratio>=0.4){
+    gm("🟡 VERY CLOSE. The central idea is taking shape — but "+(missing[0]?"you still need to determine: "+missing[0].area+".":"one important detail is missing."));
+    missing.slice(0,2).forEach(f=>discover(f.id)); return;
+  }
+  if(hits.size>=2 || ratio>=0.35){
+    gm("🟠 PARTIALLY CORRECT. Some elements are right — but the main explanation is incomplete"+(missing[0]?". Try: "+missing[0].area:"."));
+    return;
+  }
+  gm("🔴 INCORRECT. That contradicts the established facts.");
+}
+
+/* ---------- commands ---------- */
+function doHint(){
+  if(S.over) return;
+  if(S.hintLevel>=3){ gm("No more hints — the rest is yours to find."); return; }
+  S.hintLevel++; S.hintsUsed++;
+  S.score -= (S.hintLevel===1?5:S.hintLevel===2?10:20);
+  gm("💡 Hint "+S.hintLevel+": "+S.m.hints[S.hintLevel-1]); hud();
+}
+function doProgress(){
+  const pct=Math.round(100*S.discovered.size/S.m.facts.length);
+  gm("📊 You are about "+pct+"% of the way there.");
+}
+function doRecap(){
+  const conf=[...S.discovered].map(id=>S.m.facts.find(f=>f.id===id).text);
+  const unk=S.m.facts.filter(f=>!S.discovered.has(f.id)).map(f=>f.area);
+  let s="📝 RECAP\n\nCONFIRMED:\n"+(conf.length?conf.map(t=>"• "+t).join("\n"):"• nothing yet");
+  if(S.ruledOut.length){ const u=[...new Set(S.ruledOut)]; s+="\n\nRULED OUT:\n"+u.map(t=>"• "+t).join("\n"); }
+  if(unk.length){ s+="\n\nUNKNOWN:\n"+unk.map(t=>"• "+t+" — ?").join("\n"); }
+  gm(s);
+}
+function reveal(win){
+  S.over=true;
+  if(!win){ S.score-=30; }
+  else if(S.hintsUsed===0){ S.score+=10; }
+  const r=$("reveal-screen");
+  r.innerHTML=
+    (win?"<h2>🎉 MYSTERY SOLVED!</h2>":"<h2>🏳 REVEAL — THE SOUP BOTTOM</h2>")+
+    "<div class='label'>Soup Surface</div><p class='surface' style='font-family:Georgia,serif;font-size:17px'>"+S.m.surface+"</p>"+
+    "<div class='label'>Soup Bottom</div>"+S.m.bottom.map(p=>"<p>"+p+"</p>").join("")+
+    "<div class='label'>Key Clue</div><p>"+S.m.keyClue+"</p>"+
+    "<div class='label'>The Misleading Assumption</div><p>"+S.m.misdirect+"</p>"+
+    "<div class='label'>Shortest Path</div><p>"+S.m.shortPath+"</p>"+
+    "<div class='label'>Player Performance</div><p>Questions asked: <b>"+S.questions+"</b> · Hints used: <b>"+S.hintsUsed+"</b> · Final score: <b>"+Math.max(0,S.score)+"</b></p>"+
+    "<p><b>Rating: "+rate(S.score)+"</b></p>"+
+    "<div class='row'><button class='btn' id='btn-again'>ANOTHER MYSTERY</button></div>";
+  r.classList.remove("hidden");
+  $("btn-again").onclick=()=>{ r.classList.add("hidden"); $("start-screen").classList.remove("hidden"); $("game-screen").classList.add("hidden"); window.scrollTo(0,0); };
+  r.scrollIntoView({behavior:"smooth"});
+}
+function rate(s){ s=Math.max(0,s);
+  if(s>=100) return "Master Detective";
+  if(s>=85) return "Expert Investigator";
+  if(s>=70) return "Sharp Detective";
+  if(s>=50) return "Good Effort";
+  return "Mystery Apprentice";
+}
+function win(){ gm("🎉 MYSTERY SOLVED!"); setTimeout(()=>reveal(true),700); }
+
+/* ---------- input handling ---------- */
+function handle(input){
+  const t=input.trim(); if(!t) return;
+  addMsg(t,"player");
+  const l=t.toLowerCase();
+  if(/^rules?\b/.test(l)){
+    gm("📜 RULES\nI know the full story; you reconstruct it with yes/no questions. Answers: ✅ YES · ❌ NO · ➗ PARTIALLY · ⚪ IRRELEVANT.\nCommands: HINT (3 levels, −5/−10/−20) · PROGRESS · RECAP · THEORY: your guess · GIVE UP (−30) · NEW GAME.\nSolve without hints for +10.");
+    return;
+  }
+  if(S.over){ gm("This mystery is over — start a NEW GAME."); return; }
+  if(/^hint\b|^give (me )?(a |some )?hint/.test(l)){ doHint(); return; }
+  if(/^progress\b/.test(l)){ doProgress(); return; }
+  if(/^recap\b/.test(l)){ doRecap(); return; }
+  if(/^(give ?up|answer)\b/.test(l)){ gm("🏳 Revealing the solution…"); reveal(false); return; }
+  if(/^new ?game\b|^restart\b/.test(l)){ $("start-screen").classList.remove("hidden"); $("game-screen").classList.add("hidden"); $("reveal-screen").classList.add("hidden"); return; }
+  if(/^theory\s*:?/i.test(t)){ S.questions++; hud(); evalTheory(t.replace(/^theory\s*:?/i,"")); return; }
+  if(/^(what|why|how|who|where|when|which|whose|tell|explain|describe)\b/.test(l)){
+    gm("That is what you need to discover. Try asking a yes/no question.");
+    return;
+  }
+  S.questions++; hud();
+  setTimeout(()=>answerQuestion(t), 280+Math.random()*320);
+}
+
+$("qform").addEventListener("submit",e=>{
+  e.preventDefault();
+  const v=$("qin").value; $("qin").value="";
+  handle(v);
+});
+$("qin").addEventListener("keydown",e=>{
+  if(e.key==="Enter"){ e.preventDefault();
+    const v=$("qin").value; $("qin").value="";
+    handle(v);
+  }
+});
+document.querySelectorAll("[data-cmd]").forEach(b=>{
+  b.addEventListener("click",()=>{
+    const c=b.dataset.cmd;
+    if(c.startsWith("THEORY")){ $("qin").value="THEORY: "; $("qin").focus(); return; }
+    handle(c);
+  });
+});
+$("btn-start").addEventListener("click",()=>{
+  startGame($("sel-diff").value, $("sel-cat").value);
+});
+$("btn-rules").addEventListener("click",()=>handle("RULES"));
+</script>
+</body>
+</html>
