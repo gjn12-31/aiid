@@ -7,11 +7,13 @@ A lateral-thinking mystery game in a hand-drawn medieval tavern. Players can gen
 Requires Node.js 24 and npm.
 
 ```sh
-npm ci
+npm ci --registry=https://registry.npmjs.org
 cp .env.example .env.local
 # Fill in the gateway URL, model identifier, and API key in .env.local.
 npm run dev
 ```
+
+If macOS reports `EMFILE: too many open files, watch`, use `npm run dev:poll` to enable polling instead of native file watchers.
 
 Open http://127.0.0.1:3000. Sessions live in `data/mystery.sqlite`. An anonymous browser cookie grants access to that visitor's sessions; clearing it loses access. Accounts and cross-device sync are not implemented.
 

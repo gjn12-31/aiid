@@ -145,12 +145,15 @@ Return only JSON {"coherent":true|false,"inferable":true|false,"spoilerFree":tru
 Check coherence by comparing every surface claim, fact, hint and counterexample. Track causes, materials, identity, timing and physical constraints. The ending must actually follow from the stated facts. Do NOT invent additional facts to repair the candidate. For example: losing all usable flour cannot be fixed by finding yeast; contents of flooded boots cannot remain dry without a stated physical reason; a clock cannot pump spring water just because a convenient contract says so. These would fail coherence.
 Check inferability: there must be a clear puzzling event and an ordinary yes/no route to its essential twist. Reject elaborate invented contracts, machinery, private laws, arbitrary secret rituals, numbers or identities with no clue. Hidden roles, common physical mechanisms and mistaken everyday assumptions are valid. Do not reject simply because the solution is hidden: that is the game.
 Check spoilers: title/subtitle/surface must not directly disclose the key mechanism or motive. Check mood/language: happy requests need a happy, nonviolent ending; horror requests need an unsettling situation or revelation. Questions about impossible explicit constraints should fail, not be invented away.
-Set every flag honestly. List only material defects, not stylistic preferences. If all four checks pass, problems must be empty. Never rewrite the story.`,
+Set every flag honestly. Return all four flags as JSON booleans, and problems as an array of at most 5 strings, each at most 300 characters. Combine related defects and keep each description brief. List only material defects, not stylistic preferences. If all four checks pass, problems must be empty. Never rewrite the story.`,
       JSON.stringify({ preferences: brief, story }),
       { maxTokens: 1000, timeoutMs },
     ),
   );
-  if (!result.success) throw new HostUnavailable();
+  if (!result.success) {
+    console.warn("Editorial response validation failed", result.error.issues);
+    throw new HostUnavailable();
+  }
   const r = result.data;
   return {
     acceptable:

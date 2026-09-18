@@ -12,7 +12,8 @@
     "typecheck": "tsc --noEmit",
     "test": "node --conditions=react-server --import tsx --test tests/*.test.ts",
     "test:live": "node --env-file=.env.local --conditions=react-server --import tsx scripts/check-host.ts",
-    "test:generation": "node --env-file=.env.local --conditions=react-server --import tsx scripts/check-generation.ts"
+    "test:generation": "node --env-file=.env.local --conditions=react-server --import tsx scripts/check-generation.ts",
+    "dev:poll": "WATCHPACK_POLLING=true next dev --hostname 127.0.0.1"
   },
   "dependencies": {
     "@fontsource/dm-sans": "5.3.0",
