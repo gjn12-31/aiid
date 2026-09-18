@@ -225,7 +225,7 @@ export function Investigation({ initial }: { initial: SessionView }) {
           </div>
           <div className="case-stats">
             <span>
-              <b>{game.questions}</b> questions
+              <b>{game.questions}</b> {game.questions === 1 ? "question" : "questions"}
             </span>
             <span>
               <b>{game.hintsUsed}/3</b> hints
@@ -299,7 +299,7 @@ export function Investigation({ initial }: { initial: SessionView }) {
               </article>
             ))}
             {busy && (
-              <div className="thinking">
+              <div className="thinking" role="status">
                 <span />
                 <span />
                 <span />
