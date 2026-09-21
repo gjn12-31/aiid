@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Flame, ArrowUpRight } from "lucide-react";
+import { Feedback } from "./feedback";
 export function Brand({ small = false }: { small?: boolean }) {
   return (
     <Link
@@ -21,6 +22,7 @@ export function Brand({ small = false }: { small?: boolean }) {
 export function Footer() {
   return (
     <footer className="site-footer">
+      <Feedback />
       <span>
         Behind the Mystery <i> / </i> A tavern for curious souls
       </span>
