@@ -255,6 +255,15 @@ function localAsk(caseId: HostCase, question: string) {
   }
   if (counter.ratio >= 0.5 && counter.ratio > fact.ratio)
     return { verdict: "NO" as const };
+  // A fact may itself negate a wrong assumption ("...until a future event,
+  // not the girl's age"). Strong overlap with that negated clause means NO.
+  for (const f of def.secret.facts) {
+    const m = /\bnot\b/.exec(f.statement);
+    if (!m || m.index < 12) continue;
+    const hits = hitsOf(qw, f.statement.slice(m.index + 4));
+    if (hits.length >= 1 && hits.length / qw.length >= 0.33)
+      return { verdict: "NO" as const };
+  }
   const rare = fact.words.some(
     (w) =>
       factTexts.filter((t) => hitsOf([w], t).length > 0).length <= 2,
