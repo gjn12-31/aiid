@@ -377,7 +377,7 @@ export function Library({
                       </span>
                     </div>
                     <button
-                      disabled={!!starting || (!available && !active)}
+                      disabled={!!starting}
                       onClick={() =>
                         active
                           ? router.push(`/play/${active.id}`)
